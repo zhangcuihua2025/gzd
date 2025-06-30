@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>下载中心</title>
+</head>
+<body>
+    <h1>文件下载</h1>
+    <a href="文件名.html" download>点击下载HTML文件</a>
+    
+    <!-- 强制下载脚本 -->
+    <script>
+        document.querySelector('a').addEventListener('click', function(e) {
+            e.preventDefault();
+            const link = document.createElement('a');
+            link.href = this.href;
+            link.download = this.download || this.href.split('/').pop();
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+    </script>
+</body>
+</html>
