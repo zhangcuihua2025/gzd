@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工资实时累计计算器</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #1a2a6c);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: white;
+            overflow-x: hidden;
+        }
+        
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+            z-index: 10;
+        }
+        
+        .container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+            z-index: -1;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(to right, #ffd700, #ffffff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: 1px;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        
+        .content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-top: 20px;
+        }
+        
+        .input-section, .display-section {
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        .card {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            height: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .input-group {
+            margin-bottom: 25px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+        }
+        
+        label i {
+            margin-right: 10px;
+            color: #ffd700;
+            font-size: 1.4rem;
+        }
+        
+        .salary-input {
+            width: 100%;
+            padding: 18px;
+            border: none;
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.3);
+            color: white;
+            font-size: 1.6rem;
+            text-align: center;
+            outline: none;
+            transition: all 0.3s ease;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.2);
+            font-weight: bold;
+        }
+        
+        .salary-input:focus {
+            background: rgba(0, 0, 0, 0.4);
+            box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.5);
+        }
+        
+        .salary-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .money-display {
+            text-align: center;
+            margin: 25px 0;
+        }
+        
+        .per-second {
+            font-size: 1.8rem;
+            font-weight: 500;
+            margin: 20px 0;
+            color: #ffd700;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+        
+        .amount {
+            font-size: 4.5rem;
+            font-weight: 800;
+            margin: 20px 0;
+            color: #ffffff;
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.7);
+            background: linear-gradient(to bottom, #ffffff, #ffd700);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .unit {
+            font-size: 1.3rem;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+        
+        .visualization-container {
+            position: relative;
+            height: 300px;
+            margin-top: 20px;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.2);
+        }
+        
+        #money-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .calculation {
+            margin-top: 25px;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            border-radius: 12px;
+            font-size: 1rem;
+            line-height: 1.6;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .calculation p {
+            margin-bottom: 10px;
+        }
+        
+        .note {
+            margin-top: 25px;
+            font-size: 0.95rem;
+            opacity: 0.8;
+            text-align: center;
+            padding: 15px;
+            background: rgba(255, 215, 0, 0.1);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-3px);
+        }
+        
+        .btn i {
+            font-size: 1.3rem;
+        }
+        
+        .btn.reset {
+            background: rgba(255, 99, 71, 0.2);
+        }
+        
+        .btn.reset:hover {
+            background: rgba(255, 99, 71, 0.3);
+        }
+        
+        .btn.sound {
+            background: rgba(0, 128, 0, 0.2);
+        }
+        
+        .btn.sound:hover {
+            background: rgba(0, 128, 0, 0.3);
+        }
+        
+        .money-particle {
+            position: absolute;
+            color: #ffd700;
+            font-size: 24px;
+            animation: fall linear forwards;
+            user-select: none;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
+            z-index: 5;
+            font-weight: bold;
+        }
+        
+        @keyframes fall {
+            to {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        .sound-indicator {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 20;
+        }
+        
+        .sound-indicator i {
+            font-size: 1.5rem;
+            color: #ffd700;
+        }
+        
+        .money-bag {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 215, 0, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 15;
+            border: 2px solid rgba(255, 215, 0, 0.5);
+            animation: pulse 1.5s infinite;
+        }
+        
+        .money-bag i {
+            font-size: 2.5rem;
+            color: #ffd700;
+        }
+        
+        @keyframes pulse {
+            0% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.1); }
+            100% { transform: translateX(-50%) scale(1); }
+        }
+        
+        @media (max-width: 768px) {
+            .content {
+                flex-direction: column;
+            }
+            
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            .amount {
+                font-size: 3.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-money-bill-wave"></i> 工资累计计算器 (8小时工作制)</h1>
+            <p class="subtitle">输入您的月薪，按每天8小时工作制计算实时到账工资</p>
+        </header>
+        
+        <div class="content">
+            <div class="input-section">
+                <div class="card">
+                    <div class="input-group">
+                        <label for="salary"><i class="fas fa-money-check-alt"></i> 请输入您的月工资（元）</label>
+                        <input type="number" id="salary" class="salary-input" placeholder="例如：15000" value="15000">
+                    </div>
+                    
+                    <div class="money-display">
+                        <div class="per-second">累计到账工资</div>
+                        <div class="amount" id="accumulated-amount">0.00</div>
+                        <div class="unit">元</div>
+                    </div>
+                    
+                    <div class="controls">
+                        <button class="btn" id="start-btn">
+                            <i class="fas fa-play"></i> 开始累计
+                        </button>
+                        <button class="btn reset" id="reset-btn">
+                            <i class="fas fa-redo"></i> 重置
+                        </button>
+                        <button class="btn sound" id="sound-btn">
+                            <i class="fas fa-volume-up"></i> 音效
+                        </button>
+                    </div>
+                    
+                    <div class="calculation">
+                        <p><strong>计算说明：</strong></p>
+                        <p>每月按30天计算，每天8小时，每小时3600秒</p>
+                        <p>每月工作秒数 = 30 × 8 × 3600 = 864,000秒</p>
+                        <p>每秒工资 = 月薪 ÷ 864,000</p>
+                        <p>累计工资 = 每秒工资 × 经过的秒数</p>
+                        <p style="color: #ffd700; margin-top: 15px;">每到账1元钱，将播放微信到账音效</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="display-section">
+                <div class="card">
+                    <h2><i class="fas fa-chart-line"></i> 工资流动可视化</h2>
+                    <div class="visualization-container">
+                        <div class="sound-indicator" id="sound-indicator">
+                            <i class="fas fa-volume-up"></i>
+                        </div>
+                        <div class="money-bag">
+                            <i class="fas fa-money-bill-wave"></i>
+                        </div>
+                        <canvas id="money-canvas"></canvas>
+                    </div>
+                    
+                    <div class="note">
+                        <p><i class="fas fa-info-circle"></i> 此计算仅作娱乐参考，实际工资发放以公司政策为准</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 微信到账音效 -->
+    <audio id="wechat-sound" preload="auto">
+        <source src="https://res.wx.qq.com/wechatgame/product/webpack/userupload/20200831/1110/7c3c6a0e0d4f3e3b4f0a4f3e3b4f0a4f.mp3" type="audio/mpeg">
+    </audio>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 获取DOM元素
+            const salaryInput = document.getElementById('salary');
+            const accumulatedDisplay = document.getElementById('accumulated-amount');
+            const startBtn = document.getElementById('start-btn');
+            const resetBtn = document.getElementById('reset-btn');
+            const soundBtn = document.getElementById('sound-btn');
+            const soundIndicator = document.getElementById('sound-indicator');
+            const canvas = document.getElementById('money-canvas');
+            const ctx = canvas.getContext('2d');
+            const wechatSound = document.getElementById('wechat-sound');
+            
+            // 调整Canvas大小
+            function resizeCanvas() {
+                const container = canvas.parentElement;
+                canvas.width = container.clientWidth;
+                canvas.height = container.clientHeight;
+            }
+            
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+            
+            // 全局变量
+            let monthlySalary = 15000;
+            let perSecondSalary = 0;
+            let accumulatedSalary = 0;
+            let startTime = null;
+            let animationFrameId = null;
+            let isRunning = false;
+            let particles = [];
+            let soundEnabled = true;
+            let lastInteger = 0; // 用于跟踪整数部分
+            
+            // 初始化计算
+            calculatePerSecondSalary();
+            updateDisplays();
+            
+            // 输入事件监听
+            salaryInput.addEventListener('input', function() {
+                monthlySalary = parseFloat(this.value) || 0;
+                calculatePerSecondSalary();
+                updateDisplays();
+            });
+            
+            // 开始按钮事件
+            startBtn.addEventListener('click', function() {
+                if (isRunning) {
+                    pauseAccumulation();
+                    startBtn.innerHTML = '<i class="fas fa-play"></i> 继续累计';
+                } else {
+                    startAccumulation();
+                    startBtn.innerHTML = '<i class="fas fa-pause"></i> 暂停';
+                    
+                    // 解锁音频自动播放（解决浏览器限制）
+                    unlockAudio();
+                }
+            });
+            
+            // 解锁音频自动播放
+            function unlockAudio() {
+                // 创建一个空音频上下文
+                const context = new (window.AudioContext || window.webkitAudioContext)();
+                const source = context.createBufferSource();
+                source.buffer = context.createBuffer(1, 1, 22050);
+                source.connect(context.destination);
+                source.start();
+                
+                // 在iOS上，需要恢复上下文
+                if (context.state === 'suspended') {
+                    context.resume();
+                }
+            }
+            
+            // 重置按钮事件
+            resetBtn.addEventListener('click', function() {
+                resetAccumulation();
+                startBtn.innerHTML = '<i class="fas fa-play"></i> 开始累计';
+            });
+            
+            // 音效按钮事件
+            soundBtn.addEventListener('click', function() {
+                soundEnabled = !soundEnabled;
+                soundBtn.innerHTML = soundEnabled ? 
+                    '<i class="fas fa-volume-up"></i> 音效' : 
+                    '<i class="fas fa-volume-mute"></i> 音效';
+                    
+                soundIndicator.innerHTML = soundEnabled ? 
+                    '<i class="fas fa-volume-up"></i>' : 
+                    '<i class="fas fa-volume-mute"></i>';
+            });
+            
+            // 计算每秒工资（按每天8小时工作制）
+            function calculatePerSecondSalary() {
+                // 每月秒数 = 30天 * 8小时 * 3600秒
+                const secondsInMonth = 30 * 8 * 3600; // 864,000秒
+                perSecondSalary = monthlySalary / secondsInMonth;
+            }
+            
+            // 更新显示内容
+            function updateDisplays() {
+                if (!isRunning) {
+                    accumulatedDisplay.textContent = accumulatedSalary.toFixed(4);
+                }
+            }
+            
+            // 播放微信到账音效
+            function playWechatSound() {
+                if (!soundEnabled) return;
+                
+                // 确保音频能够播放
+                wechatSound.currentTime = 0;
+                wechatSound.play()
+                    .then(() => {
+                        console.log("音效播放成功");
+                    })
+                    .catch(error => {
+                        console.error("音效播放失败:", error);
+                        // 尝试重新加载音频
+                        wechatSound.load();
+                    });
+            }
+            
+            // 开始累计
+            function startAccumulation() {
+                if (!isRunning) {
+                    isRunning = true;
+                    startTime = Date.now();
+                    lastInteger = 0; // 重置整数跟踪
+                    
+                    // 启动动画循环
+                    function updateAccumulated() {
+                        if (!isRunning) return;
+                        
+                        const currentTime = Date.now();
+                        const elapsedSeconds = (currentTime - startTime) / 1000;
+                        accumulatedSalary = perSecondSalary * elapsedSeconds;
+                        
+                        // 检查是否达到新的整数元
+                        const currentInteger = Math.floor(accumulatedSalary);
+                        if (currentInteger > lastInteger) {
+                            playWechatSound();
+                            lastInteger = currentInteger;
+                            
+                            // 创建庆祝粒子
+                            createCelebrationParticles();
+                        }
+                        
+                        accumulatedDisplay.textContent = accumulatedSalary.toFixed(4);
+                        
+                        // 创建常规粒子
+                        if (Math.random() < 0.5 && accumulatedSalary > 0) {
+                            createParticle();
+                        }
+                        
+                        animationFrameId = requestAnimationFrame(updateAccumulated);
+                    }
+                    
+                    animationFrameId = requestAnimationFrame(updateAccumulated);
+                    drawFlowAnimation();
+                }
+            }
+            
+            // 暂停累计
+            function pauseAccumulation() {
+                isRunning = false;
+                if (animationFrameId) {
+                    cancelAnimationFrame(animationFrameId);
+                }
+            }
+            
+            // 重置累计
+            function resetAccumulation() {
+                pauseAccumulation();
+                accumulatedSalary = 0;
+                startTime = null;
+                particles = [];
+                lastInteger = 0;
+                updateDisplays();
+            }
+            
+            // 创建粒子（包含每秒工资数额）
+            function createParticle() {
+                const particle = {
+                    x: Math.random() * canvas.width,
+                    y: -20,
+                    size: Math.random() * 15 + 10,
+                    speed: Math.random() * 2 + 1,
+                    opacity: Math.random() * 0.5 + 0.5,
+                    text: `¥${perSecondSalary.toFixed(4)}`,
+                    type: 'normal'
+                };
+                particles.push(particle);
+            }
+            
+            // 创建庆祝粒子（当达到整数元时）
+            function createCelebrationParticles() {
+                for (let i = 0; i < 15; i++) {
+                    const particle = {
+                        x: canvas.width / 2,
+                        y: canvas.height * 0.8,
+                        size: Math.random() * 20 + 15,
+                        speed: Math.random() * 3 + 2,
+                        angle: Math.random() * Math.PI * 2,
+                        opacity: 1,
+                        text: '💰',
+                        type: 'celebration',
+                        life: 100
+                    };
+                    particles.push(particle);
+                }
+            }
+            
+            // 绘制流动动画
+            function drawFlowAnimation() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // 绘制流动线
+                const now = Date.now();
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = 'rgba(255, 215, 0, 0.3)';
+                ctx.beginPath();
+                
+                for (let x = 0; x < canvas.width; x += 20) {
+                    const y = Math.sin(x * 0.01 + now * 0.001) * 20 + canvas.height / 2;
+                    
+                    if (x === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+                
+                ctx.stroke();
+                
+                // 绘制粒子
+                for (let i = 0; i < particles.length; i++) {
+                    const p = particles[i];
+                    
+                    if (p.type === 'normal') {
+                        p.y += p.speed;
+                    } else if (p.type === 'celebration') {
+                        p.x += Math.cos(p.angle) * p.speed;
+                        p.y += Math.sin(p.angle) * p.speed;
+                        p.life--;
+                        p.opacity = p.life / 100;
+                    }
+                    
+                    ctx.font = `bold ${p.size}px Arial`;
+                    ctx.fillStyle = `rgba(255, 215, 0, ${p.opacity})`;
+                    ctx.textAlign = 'center';
+                    ctx.fillText(p.text, p.x, p.y);
+                    
+                    // 移除超出画布或生命周期结束的粒子
+                    if ((p.y > canvas.height + 50) || 
+                        (p.type === 'celebration' && p.life <= 0) ||
+                        p.x < -50 || p.x > canvas.width + 50) {
+                        particles.splice(i, 1);
+                        i--;
+                    }
+                }
+                
+                // 添加随机粒子
+                if (isRunning && Math.random() < 0.1) {
+                    createParticle();
+                }
+                
+                requestAnimationFrame(drawFlowAnimation);
+            }
+            
+            // 初始绘制
+            drawFlowAnimation();
+        });
+    </script>
+</body>
+</html>
